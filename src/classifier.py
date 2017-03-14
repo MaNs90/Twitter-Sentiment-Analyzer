@@ -1,6 +1,9 @@
 from src.preprocessor import Lexicon
 from sklearn.metrics import f1_score
 from sklearn import svm
+import os
+
+PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 
 
 class Classifiers:
@@ -20,19 +23,19 @@ class Classifiers:
 
         print("Embedding Training Data...")
         self.feature = Lexicon(
-            "data-clean/" + self.trainingPath,
-            "data/glove/glove.twitter.27B.100d.txt",
+            PATH + "/data-clean/" + self.trainingPath,
+            PATH + "/data/glove/glove.twitter.27B.100d.txt",
             100,
-            "data/sentiment/unigrams-pmilexicon.txt"
+            PATH + "/data/sentiment/unigrams-pmilexicon.txt"
         )
         self.feature.lexicon()
 
         print("Embedding Test Data...")
         self.test = Lexicon(
-            "data-clean/" + self.testPath,
-            "data/glove/glove.twitter.27B.100d.txt",
+            PATH + "/data-clean/" + self.testPath,
+            PATH + "/data/glove/glove.twitter.27B.100d.txt",
             100,
-            "data/sentiment/unigrams-pmilexicon.txt"
+            PATH + "/data/sentiment/unigrams-pmilexicon.txt"
         )
         self.test.lexicon()
 
