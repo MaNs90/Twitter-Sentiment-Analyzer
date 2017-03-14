@@ -21,24 +21,24 @@ class Cleaner:
         self._setUpEmoticonRegularExpressions()
 
         self.regexCorrections = {
-            re.compile(r"http\S+"): "<URL>",
+            re.compile(r"http\S+"): "<url>",
             re.compile(r"/"): " / ",
-            re.compile(r"[@][A-z0-9]+"): "<USER>",
-            re.compile(self.happyEmoticonRegex): "<SMILE>",
-            re.compile(r"[8:=;]['`\-][0-9A-z]"): "<LOLFACE>",
-            re.compile(self.sadEmoticonRegex): "<SADFACE>",
-            re.compile(self.neutralEmoticonRegex): "<NEUTRALFACE>",
-            re.compile(r"<3"): "<HEART>",
-            re.compile(r"[-+]?[0-9]+"): "<NUMBER>",
-            re.compile(r'\#?[A-Za-z\']*[\.\,]'): " ",
+            re.compile(r"[@][A-z0-9]+"): "<user>",
+            re.compile(self.happyEmoticonRegex): "<smile>",
+            re.compile(r"[8:=;]['`\-][0-9A-z]"): "<lolface>",
+            re.compile(self.sadEmoticonRegex): "<sadface>",
+            re.compile(self.neutralEmoticonRegex): "<neutralface>",
+            re.compile(r"<3"): "<heart>",
+            re.compile(r"[-+]?[0-9]+"): "<number>",
+            # re.compile(r'\#?[A-Za-z\']*[\.\,]'): " ",
             # re.compile(r'\#?[A-Za-z]*\'[A-Za-z]*'): "",
         }
 
         self.functionCorrections = {
             re.compile(r"[#][A-z0-9]+"): self._hashtagConverter,
-            re.compile(r"[!?.]{2,}"): lambda tweetWord: tweetWord[0] + " <REPEAT>",
-            re.compile(r"(\\w+)\\1$"): lambda tweetWord: tweetWord[len(tweetWord) - 1] + " <ELONG>",
-            re.compile(r"^[A-Z]+$"): lambda tweetWord: tweetWord.lower() + " <ALLCAPS>"
+            re.compile(r"[!?.]{2,}"): lambda tweetWord: tweetWord[0] + " <repeat>",
+            re.compile(r"(\\w+)\\1$"): lambda tweetWord: tweetWord[len(tweetWord) - 1] + " <elong>",
+            re.compile(r"^[A-Z]+$"): lambda tweetWord: tweetWord.lower() + " <allcaps>"
         }
 
         self.multipleDotsRegex = re.compile(r"[.]{2,}")
@@ -46,7 +46,7 @@ class Cleaner:
     def _hashtagConverter(self, hashtag):
         hashtagBody = hashtag[1:len(hashtag)]
 
-        return "<HASHTAG> {}{}".format(hashtagBody, (" <ALLCAPS>"
+        return "<hashtag> {}{}".format(hashtagBody, (" <allcaps>"
                                                      if hashtagBody.upper() == hashtagBody else ""))
 
     def _setUpEmoticonRegularExpressions(self):
@@ -87,7 +87,7 @@ class Cleaner:
         if os._exists(self.cleanedPathB):
             os.remove(self.cleanedPathB)
 
-        with open(self.cleanedPathA, "w") as clean:
+        with open(self.cleanedPathA, "w", newline="\n") as clean:
             output = csv.writer(clean, delimiter="\t")
             for index, row in dataFrameA.iterrows():
                 sentiment, tweetWordList = row[4], row[5].split()
@@ -98,7 +98,7 @@ class Cleaner:
 
         print("Cleaned: '{}', clean file path: '{}'".format(self.pathA, self.cleanedPathA))
 
-        with open(self.cleanedPathB, "w") as clean:
+        with open(self.cleanedPathB, "w", newline="\n") as clean:
             output = csv.writer(clean, delimiter="\t")
             for index, row in dataFrameB.iterrows():
                 # 263034334720716800
@@ -115,7 +115,7 @@ class Cleaner:
     def _runDeepCleanProcess(self, tweetWord):
         tweetWord = re.sub(self.multipleDotsRegex, "", tweetWord)
 
-        tweetWord = tweetWord.replace(",", " ")
+        #tweetWord = tweetWord.replace(",", " ")
 
         for regex, replacementWord in self.regexCorrections.items():
             originalWord = tweetWord
