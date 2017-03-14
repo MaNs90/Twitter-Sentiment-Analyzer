@@ -3,14 +3,17 @@ import re
 import os
 import pandas as pd
 
+
 class Cleaner:
     def __init__(self, pathA, pathB):
-        filePathRoot = "data/"
+        back1 = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
+
+        filePathRoot = back1 + "/data/"
 
         self.pathA = filePathRoot + pathA
         self.pathB = filePathRoot + pathB
 
-        cleanedPathRoot = "data-clean/"
+        cleanedPathRoot = back1 + "/data-clean/"
 
         self.cleanedPathA = cleanedPathRoot + pathA
         self.cleanedPathB = cleanedPathRoot + pathB
