@@ -1,4 +1,4 @@
-from src.preprocessor import Lexicon
+from src.preprocessor import Lexicon, WordEmbeddings
 from sklearn.metrics import f1_score
 from sklearn import svm
 import os
@@ -23,21 +23,32 @@ class Classifiers:
 
         print("Embedding Training Data...")
         self.feature = Lexicon(
-            PATH + "/data-clean/" + self.trainingPath,
-            PATH + "/data/glove/glove.twitter.27B.100d.txt",
+            os.path.join(PATH, "data-clean", self.trainingPath),
+            os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
-            PATH + "/data/sentiment/unigrams-pmilexicon.txt"
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
         )
         self.feature.lexicon()
 
         print("Embedding Test Data...")
         self.test = Lexicon(
-            PATH + "/data-clean/" + self.testPath,
-            PATH + "/data/glove/glove.twitter.27B.100d.txt",
+            os.path.join(PATH, "data-clean", self.testPath),
+            os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
-            PATH + "/data/sentiment/unigrams-pmilexicon.txt"
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
         )
         self.test.lexicon()
+
+    def processNN(self):
+        self.feature = WordEmbeddings(
+            os.path.join(PATH, "data-clean", "self.trainingPath"),
+            os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
+            100
+        )
+        self.feature.glove(flag=True)
+
+        #self.test = Object
+        self.test.run()
 
     def svm(self):
         # simply applies an SVM classifier to the feature vector
@@ -47,3 +58,9 @@ class Classifiers:
         support = support.fit(self.feature.vector, self.feature.labels())
         result = support.predict(self.test.vector)
         print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+
+    def nn(self):
+        return
+        #fit
+        #predict
+        #result

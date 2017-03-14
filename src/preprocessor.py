@@ -40,7 +40,7 @@ class WordEmbeddings(Feature):
         self.dim = dim
         self.vector = np.empty([len(self.myTweets), 1])
 
-    def glove(self):
+    def glove(self, flag=False):
         glove_embedding = {}
 
         all_words = set()
@@ -56,9 +56,15 @@ class WordEmbeddings(Feature):
                     glove_count += 1
                     glove_embedding[word] = np.array(nums)
         index = 0
-        features = np.empty([len(self.myTweets), self.dim])
+        if flag:
+            features = []
+        else:
+            features = np.empty([len(self.myTweets), self.dim])
         for words in self.myTweets:
-            temp = np.empty([len(words), self.dim])
+            if flag:
+                temp = np.empty([100, self.dim])
+            else:
+                temp = np.empty([len(words), self.dim])
             count = 0
             for w in words:
                 if w in glove_embedding.keys():
@@ -66,7 +72,10 @@ class WordEmbeddings(Feature):
                 else:
                     temp[count] = np.zeros(self.dim)
                 count += 1
-            features[index] = np.mean(temp, axis=0)
+            if flag:
+                features.append(temp)
+            else:
+                features[index] = np.mean(temp, axis=0)
             index += 1
 
         self.vector = features

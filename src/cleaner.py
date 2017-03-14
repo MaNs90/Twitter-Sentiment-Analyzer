@@ -8,15 +8,15 @@ class Cleaner:
     def __init__(self, pathA, pathB):
         back1 = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 
-        filePathRoot = back1 + "/data/"
+        filePathRoot = os.path.join(back1, "data")
 
-        self.pathA = filePathRoot + pathA
-        self.pathB = filePathRoot + pathB
+        self.pathA = os.path.join(filePathRoot, pathA)
+        self.pathB = os.path.join(filePathRoot, pathB)
 
-        cleanedPathRoot = back1 + "/data-clean/"
+        cleanedPathRoot = os.path.join(back1, "data-clean")
 
-        self.cleanedPathA = cleanedPathRoot + pathA
-        self.cleanedPathB = cleanedPathRoot + pathB
+        self.cleanedPathA = os.path.join(cleanedPathRoot, pathA)
+        self.cleanedPathB = os.path.join(cleanedPathRoot, pathB)
 
         self._setUpEmoticonRegularExpressions()
 
