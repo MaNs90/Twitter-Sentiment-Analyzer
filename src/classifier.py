@@ -27,7 +27,8 @@ class Classifiers:
             os.path.join(PATH, "data-clean", self.trainingPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
-            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
+            os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
         )
         self.feature.getvecs()
 
@@ -36,7 +37,9 @@ class Classifiers:
             os.path.join(PATH, "data-clean", self.testPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
-            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
+            os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
+
         )
         self.test.getvecs()
 
