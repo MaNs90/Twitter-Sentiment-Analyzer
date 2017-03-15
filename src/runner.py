@@ -15,11 +15,17 @@ class Runner:
             print("Cleaning...")
             self.cleaner.clean()
             self.cleanerTest.clean()
-
-        print("Processing set B...")
+        print()    
+        print("###################### Processing Task A... ##############################")
+        self.taskA.processLexicon()
+        print("Training and Classifying using Support Vector Machines...")
+        self.taskA.svm(10)
+        
+        print()    
+        print("###################### Processing Task B... ##############################")
         self.taskB.processLexicon()
-        print("Training and Classifying...")
-        self.taskB.svm()
+        print("Training and Classifying using Support Vector Machines...")
+        self.taskB.svm(100)
 
         print("Processing RNN set B...")
         self.taskB.processNN()

@@ -31,7 +31,8 @@ class Feature:
             enum = {'positive': 2, 'neutral': 1, 'negative': 0}
             tweet_dict = {}
             for line in tsvRead:
-                self.data.append({'Sentiment' : enum[line[0]], 'Tweet' : tk.tokenize(line[1])})
+                if tk.tokenize(line[1]):
+                    self.data.append({'Sentiment' : enum[line[0]], 'Tweet' : tk.tokenize(line[1])})
 
 
 class WordEmbeddings(Feature):
@@ -57,6 +58,9 @@ class WordEmbeddings(Feature):
                 if word in all_words:
                     glove_count += 1
                     glove_embedding[word] = np.array(nums)
+        
+        print("The function found {} in the Glove embeddings out of {} total unique words".format(glove_count, len(
+            all_words)))
         index = 0
         if flag:
             features = []
@@ -86,17 +90,18 @@ class WordEmbeddings(Feature):
 
 class Lexicon(WordEmbeddings):
 
-    def __init__(self, trainingPath, glovePath, dim, sentimentPath):
+    def __init__(self, trainingPath, glovePath, dim, sentimentPath1,sentimentPath2):
         WordEmbeddings.__init__(self, trainingPath, glovePath, dim)
-        self.sentimentPath = sentimentPath
-
+        self.sentimentPath1 = sentimentPath1
+        self.sentimentPath2 = sentimentPath2
+        
     def lexicon(self):
         features = self.glove()
         all_words = set(w for words in self.myTweets for w in words)
         unigramLexicon = {}
         count = 0
         print("Finding lexical sentiments...")
-        with open(self.sentimentPath, 'r', encoding='utf-8') as infile:
+        with open(self.sentimentPath1, 'r', encoding='utf-8') as infile:
             for line in infile:
                 sentence = line.split()
                 word = sentence[0]
@@ -107,8 +112,27 @@ class Lexicon(WordEmbeddings):
         print("The function found {} in the unigram sentiment lexicon out of {} total unique words".format(count, len(
             all_words)))
 
+        bigramDict={}
+        for tweet in self.myTweets:
+            for i in range(1,len(tweet)):
+                bigramDict[(tweet[i-1],tweet[i])] = True
+              
+        bigramLexicon = {}
+        count = 0
+        with open(self.sentimentPath2, 'r',encoding='utf-8') as infile:
+            for line in infile:
+                sentence =  line.split() 
+                word0 = sentence[0]
+                word1 = sentence[1]
+                num =  sentence[2]
+                if (word0,word1) in bigramDict:
+                    count = count+1
+                    bigramLexicon[(word0,word1)] = num
+        
+        print("The function found {} in the bigram sentiment lexicon out of {} total unique words".format(count,len(bigramDict.keys())))
+        
         index = 0
-        sentimentFeatures = np.empty([len(self.myTweets), 1])
+        sentimentFeatures1 = np.empty([len(self.myTweets), 1])
         for words in self.myTweets:
             temp = np.empty([len(words), 1])
             count = 0
@@ -122,24 +146,49 @@ class Lexicon(WordEmbeddings):
                     temp[count] = 0
                 count += 1
 
-            sentimentFeatures[index] = np.mean(temp, axis=0)
+            sentimentFeatures1[index] = np.mean(temp, axis=0)
             index += 1
 
-        sentimentFeatures = normalize(sentimentFeatures, axis=0)
+        sentimentFeatures1 = normalize(sentimentFeatures1, axis=0)
+        
+        index = 0
+        sentimentFeatures2=np.empty([len(self.myTweets),1])
+        for words in self.myTweets:
+            if len(words)==0:
+                continue
+            temp = np.empty([len(words),1])
+            count = 0
+            for w in range(1,len(words)):
+                if (words[w-1],words[w]) in bigramLexicon:
+                    temp[count] = bigramLexicon[(words[w-1],words[w])]
+                else:
+                    #print("I didn't find ", w)
+                    temp[count] = 0
+                count = count + 1  
+                      
+            sentimentFeatures2[index] = np.mean(temp, axis=0)        
+            index = index + 1
+        sentimentFeatures2 = normalize(sentimentFeatures2,axis=0)  
+        
         new_features = []
         for i, f in enumerate(features):
-            new_features.append(np.append(f, sentimentFeatures[i]))
+            new_features.append(np.append(f, sentimentFeatures1[i]))
 
-        print(sentimentFeatures)
+        #print(sentimentFeatures1)
         features = np.array(new_features)
-
+        
+        new_features=[]
+        for i, f in enumerate(features):
+            new_features.append(np.append(f,sentimentFeatures2[i]))
+           
+        features = np.array(new_features)
         self.vector = features
         return features
 
 
 class Postag(Lexicon):
-    def __init__(self, trainingPath, glovePath, dim, sentimentPath):
-        Lexicon.__init__(self, trainingPath, glovePath, dim, sentimentPath)
+    def __init__(self, trainingPath, glovePath, dim, sentimentPath1, sentimentPath2):
+        Lexicon.__init__(self, trainingPath, glovePath, dim, sentimentPath1, sentimentPath2)
 
 
     def regex_or(self, *items):
@@ -165,7 +214,7 @@ class Postag(Lexicon):
         tongue = "[pPd3]+"
         otherMouths = r"(?:[oO]+|[/\\]+|[vV]+|[Ss]+|[|]+)"
 
-        bfLeft = r"(â™¥|0|[oO]|Â°|[vV]|\\$|[tT]|[xX]|;|\u0ca0|@|Ê˜|â€¢|ãƒ»|â—•|\\^|Â¬|\\*)"
+        bfLeft = r"(Ã¢â„¢Â¥|0|[oO]|Ã‚Â°|[vV]|\\$|[tT]|[xX]|;|\u0ca0|@|ÃŠËœ|Ã¢â‚¬Â¢|Ã£Æ’Â»|Ã¢â€”â€¢|\\^|Ã‚Â¬|\\*)"
         bfCenter = r"(?:[\.]|[_-]+)"
         bfRight = r"\1"
         s3 = r"(?:--['\"])"
@@ -210,21 +259,21 @@ class Postag(Lexicon):
 
         # Arrows regex 41 'A'
         Arrows = mycompile(
-            "^" + self.regex_or(r"(?:<*[-â€•â€”=]*>+|<+[-â€•â€”=]*>*)", u"[\u2190-\u21ff]+") + "$")  # Arrow regex
+            "^" + self.regex_or(r"(?:<*[-Ã¢â‚¬â€¢Ã¢â‚¬â€�=]*>+|<+[-Ã¢â‚¬â€¢Ã¢â‚¬â€�=]*>*)", u"[\u2190-\u21ff]+") + "$")  # Arrow regex
 
         # Entity regex (HTML entity) 42 'EN'
         entity_bf = r"&(?:amp|lt|gt|quot);"
         entity = mycompile(entity_bf)
 
         # arbitraryAbbrev regex (captures abbreviations) 43 'AA'
-        boundaryNotDot = self.regex_or("$", r"\s", r"[â€œ\"?!,:;]", entity_bf)
+        boundaryNotDot = self.regex_or("$", r"\s", r"[Ã¢â‚¬Å“\"?!,:;]", entity_bf)
         aa1 = r"(?:[A-Za-z]\.){2,}(?=" + boundaryNotDot + ")"
         aa2 = r"[^A-Za-z](?:[A-Za-z]\.){1,}[A-Za-z](?=" + boundaryNotDot + ")"
         standardAbbreviations = r"\b(?:[Mm]r|[Mm]rs|[Mm]s|[Dd]r|[Ss]r|[Jj]r|[Rr]ep|[Ss]en|[Ss]t)\."
         arbitraryAbbrev = mycompile("^" + self.regex_or(aa1, aa2, standardAbbreviations) + "$")
 
         # decorations regex (notes, stars, etc) 44 'D'
-        decorations = mycompile(u"(?:[â™«â™ª]+|[â˜…â˜†]+|[â™¥â�¤â™¡]+|[\u2639-\u263b]+|[\ue001-\uebbb]+)")
+        decorations = mycompile(u"(?:[Ã¢â„¢Â«Ã¢â„¢Âª]+|[Ã¢Ëœâ€¦Ã¢Ëœâ€ ]+|[Ã¢â„¢Â¥Ã¢ï¿½Â¤Ã¢â„¢Â¡]+|[\u2639-\u263b]+|[\ue001-\uebbb]+)")
 
         # HashTag regex 45 'HT'
         Hashtag = mycompile("^#[a-zA-Z0-9_]+$")
@@ -327,5 +376,6 @@ class Postag(Lexicon):
             new_features.append(np.append(f, pos[i]))
 
         Features = np.array(new_features)
+        self.vector = Features
         return Features
 
