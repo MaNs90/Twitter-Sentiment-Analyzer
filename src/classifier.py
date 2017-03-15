@@ -5,7 +5,7 @@ from keras.layers import LSTM, Masking
 from keras.models import Sequential
 from keras.layers import Dense
 import numpy as np
-from keras.models import model_from_json
+from sklearn.ensemble import RandomForestClassifier
 import os
 
 PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
@@ -21,6 +21,7 @@ class Classifiers:
         self.feature = None
         # test object should always be in the same form
         self.test = None
+        self.clfresults = None
 
     def processLexicon(self):
         # trainLexicon uses GloVe word embeddings and sentiment lexicon datasets to process/weight twitter data
@@ -31,7 +32,8 @@ class Classifiers:
             os.path.join(PATH, "data-clean", self.trainingPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
-            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
+            os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
         )
         self.feature.getvecs()
 
@@ -40,7 +42,8 @@ class Classifiers:
             os.path.join(PATH, "data-clean", self.testPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
-            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
+            os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
         )
         self.test.getvecs()
 
@@ -61,13 +64,21 @@ class Classifiers:
         self.feature.glove(flag=True)
         self.test.glove(flag=True)
 
-    def svm(self):
+    def svm(self, param):
         # simply applies an SVM classifier to the feature vector
         # prints F1 score
 
-        support = svm.SVC(kernel="linear", C=100)
+        support = svm.SVC(kernel="linear", C=param)
         support = support.fit(self.feature.vector, self.feature.labels())
         result = support.predict(self.test.vector)
+        self.clfresults = [result]
+        print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+
+    def rforest(self):
+        forest = RandomForestClassifier(n_estimators=100)
+        forest = forest.fit(self.feature.vector, self.feature.labels())
+        result = forest.predict(self.test.vector)
+        self.clfresults.append(result)
         print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
 
     def rnn(self):
@@ -100,7 +111,27 @@ class Classifiers:
 
         result=np.array(result)
 
+        self.clfresults.append(result)
         print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+
+    def hybrid(self, weights):
+        output = []
+        for i, p in enumerate(self.clfresults[0]):
+            votes = [0,0,0]
+            votes[p] = weights[0]
+            for j, altpr in enumerate(self.clfresults):
+                if j!= 0:
+                    votes[altpr[i]] += weights[j]
+            max_value = 0
+            max_index = 0
+            for i, val in enumerate(votes):
+                if val > max_value:
+                    max_index = i
+                    max_value = val
+            output.append(max_index)
+
+        print("My F1 score is ", f1_score(self.test.labels(), output, labels=[2, 0], average="macro"))
+
 
 
 
