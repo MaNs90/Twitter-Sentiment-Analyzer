@@ -31,7 +31,8 @@ class Feature:
             enum = {'positive': 2, 'neutral': 1, 'negative': 0}
             tweet_dict = {}
             for line in tsvRead:
-                self.data.append({'Sentiment' : enum[line[0]], 'Tweet' : tk.tokenize(line[1])})
+                if tk.tokenize(line[1]):
+                    self.data.append({'Sentiment' : enum[line[0]], 'Tweet' : tk.tokenize(line[1])})
 
 
 class WordEmbeddings(Feature):
@@ -57,6 +58,9 @@ class WordEmbeddings(Feature):
                 if word in all_words:
                     glove_count += 1
                     glove_embedding[word] = np.array(nums)
+        
+        print("The function found {} in the Glove embeddings out of {} total unique words".format(glove_count, len(
+            all_words)))
         index = 0
         if flag:
             features = []
@@ -170,7 +174,7 @@ class Lexicon(WordEmbeddings):
         for i, f in enumerate(features):
             new_features.append(np.append(f, sentimentFeatures1[i]))
 
-        print(sentimentFeatures1)
+        #print(sentimentFeatures1)
         features = np.array(new_features)
         
         new_features=[]

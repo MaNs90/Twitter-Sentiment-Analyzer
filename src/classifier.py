@@ -2,6 +2,7 @@ from src.preprocessor import Postag, Lexicon, WordEmbeddings
 from sklearn.metrics import f1_score
 from sklearn import svm
 from sklearn.ensemble import VotingClassifier
+from sklearn.metrics import classification_report
 import os
 
 PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
@@ -54,14 +55,22 @@ class Classifiers:
         #self.test = Object
         self.test.run()
 
-    def svm(self):
+    def svm(self,param):
         # simply applies an SVM classifier to the feature vector
         # prints F1 score
 
-        support = svm.SVC(kernel="linear", C=100)
+        support = svm.SVC(kernel="linear", C=param)
         support = support.fit(self.feature.vector, self.feature.labels())
         result = support.predict(self.test.vector)
-        print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+        print("Detailed classification report:")
+        print()
+        print("The model is trained on the full training set.")
+        print("The scores are computed on the full development set.")
+        print()
+        y_true, y_pred = self.test.labels(), result
+        print(classification_report(y_true, y_pred))
+        print()
+        print("The (F1_pos+F1_neg)/2 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
 
     def nn(self):
         return
