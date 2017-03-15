@@ -6,6 +6,11 @@ import pandas as pd
 
 class Cleaner:
     def __init__(self, pathA, pathB):
+        """
+        Cleaner class to remove noisy data.
+        :param pathA: Path to file for task A to clean.
+        :param pathB: Path to file for task B to clean.
+        """
         back1 = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 
         filePathRoot = os.path.join(back1, "data")
@@ -44,12 +49,20 @@ class Cleaner:
         self.multipleDotsRegex = re.compile(r"[.]{2,}")
 
     def _hashtagConverter(self, hashtag):
+        """
+        Convert hashtags to <hashtag>
+        :param hashtag: The hashtag to convert.
+        :return: Formatted hashtag.
+        """
         hashtagBody = hashtag[1:len(hashtag)]
 
         return "<hashtag> {}{}".format(hashtagBody, (" <allcaps>"
                                                      if hashtagBody.upper() == hashtagBody else ""))
 
     def _setUpEmoticonRegularExpressions(self):
+        """
+        Instantiate emoticon regexes.
+        """
         NormalEyes = r'[:=]'
         Wink = r'[;]'
 
@@ -79,6 +92,9 @@ class Cleaner:
         )
 
     def clean(self):
+        """
+        Begin cleaning the specified files.
+        """
         dataFrameA = pd.read_csv(self.pathA, header=None, sep='\t')
         dataFrameB = pd.read_csv(self.pathB, header=None, sep='\t')
 
@@ -110,9 +126,19 @@ class Cleaner:
         print("Cleaned: '{}', clean file path: '{}'".format(self.pathB, self.cleanedPathB))
 
     def _deepClean(self, tweetWordList):
+        """
+        Perform the cleaning process.
+        :param tweetWordList: List of tweet words.
+        :return: Run the cleaning process for each tweet word in the list.
+        """
         return [self._runDeepCleanProcess(tweetWord) for tweetWord in tweetWordList]
 
     def _runDeepCleanProcess(self, tweetWord):
+        """
+        Run the cleaning process.
+        :param tweetWord: Run cleaning on the tweet word.
+        :return: Return the new tweet word.
+        """
         tweetWord = re.sub(self.multipleDotsRegex, "", tweetWord)
 
         #tweetWord = tweetWord.replace(",", " ")

@@ -7,9 +7,12 @@ import nltk
 
 
 class Feature:
-    # Parent class for features
 
     def __init__(self, trainingPath):
+        """
+        Parent class for features.
+        :param trainingPath: The path to the file to extract features from.
+        """
         self.trainingPath = trainingPath
         self.data = []
         self.parse()
@@ -17,6 +20,10 @@ class Feature:
         self.vector = None
 
     def labels(self):
+        """
+        Finding labels for tweets.
+        :return: Labels for the tweets.
+        """
         myLabels = np.empty((len(self.myTweets)),dtype=np.int16)
         index = 0
         for sentiment in self.data:
@@ -25,6 +32,9 @@ class Feature:
         return myLabels
 
     def parse(self):
+        """
+        Replace sentiment with 2: Positive, 1: Neutral, 0: Negative
+        """
         tk = Tokenizer(preserve_case=False)
         with open(self.trainingPath) as training:
             tsvRead = csv.reader(training, delimiter="\t")
@@ -38,12 +48,23 @@ class Feature:
 class WordEmbeddings(Feature):
 
     def __init__(self, trainingPath, glovePath, dim):
+        """
+        Class to construct word embeddings for features.
+        :param trainingPath: Path of file to get training files from.
+        :param glovePath: Path to glove word embeddings.
+        :param dim: Dimension of glove embedding.
+        """
         Feature.__init__(self, trainingPath)
         self.glovePath = glovePath
         self.dim = dim
         self.vector = np.empty([len(self.myTweets), 1])
 
     def glove(self, flag=False):
+        """
+        Construct glove word embedding feature vectors.
+        :param flag: Whether we want to keep 2D data or not (feature for each word or average for tweet)
+        :return: New feature vector.
+        """
         glove_embedding = {}
 
         all_words = set()
@@ -91,11 +112,23 @@ class WordEmbeddings(Feature):
 class Lexicon(WordEmbeddings):
 
     def __init__(self, trainingPath, glovePath, dim, sentimentPath1,sentimentPath2):
+        """
+        Construct lexicons to add to word embedding feature, extends from word embeddings.
+        :param trainingPath: Path of training file.
+        :param glovePath: Path to glove file.
+        :param dim: Dimensions of the glove feature vector.
+        :param sentimentPath1: Path to unigram sentiment lexicon.
+        :param sentimentPath2: Path to bigram sentiment lexicon.
+        """
         WordEmbeddings.__init__(self, trainingPath, glovePath, dim)
         self.sentimentPath1 = sentimentPath1
         self.sentimentPath2 = sentimentPath2
         
     def lexicon(self):
+        """
+        Begin adding lexicon features to the word embedding feature.
+        :return: New feature with word embedding appended.
+        """
         features = self.glove()
         all_words = set(w for words in self.myTweets for w in words)
         unigramLexicon = {}
@@ -174,7 +207,6 @@ class Lexicon(WordEmbeddings):
         for i, f in enumerate(features):
             new_features.append(np.append(f, sentimentFeatures1[i]))
 
-        #print(sentimentFeatures1)
         features = np.array(new_features)
         
         new_features=[]
@@ -188,6 +220,14 @@ class Lexicon(WordEmbeddings):
 
 class Postag(Lexicon):
     def __init__(self, trainingPath, glovePath, dim, sentimentPath1, sentimentPath2):
+        """
+        Add POS tags to lexicon and word embedding feature vector, extends from lexicon class.
+        :param trainingPath: Path to file to get features from.
+        :param glovePath: Path to glove file.
+        :param dim: Number of dimensions for glove data.
+        :param sentimentPath1: Path to unigram sentiment lexicon file.
+        :param sentimentPath2: Path to bigram sentiment lexicon file.
+        """
         Lexicon.__init__(self, trainingPath, glovePath, dim, sentimentPath1, sentimentPath2)
 
 
@@ -340,9 +380,9 @@ class Postag(Lexicon):
 
     def pos_vectors(self, dt):
         """
-        Occurrence vector test
-        :param data:
-        :return:
+        Construct a POS vector for the data to append to the lexicon and word embedding feature vector.
+        :param dt: List of POS tagged dictionaries for the tweets.
+        :return: POS vectors for the tweets.
         """
 
         cats = ['CC', 'CD', 'DT', 'EX', 'FW', 'IN', 'JJ', 'JJR', 'JJS', 'LS', 'MD', 'NN', 'NNS', 'NNP', 'NNPS', 'PDT',
@@ -366,6 +406,10 @@ class Postag(Lexicon):
         return all_vecs
 
     def getvecs(self):
+        """
+        Calculate POS vectors and append to the word embedding and lexicon feature.
+        :return: New feature vector containing all 3 features.
+        """
         print("Getting POS tag vectors...")
         features = self.lexicon()
         pt = self.posTag('B')
