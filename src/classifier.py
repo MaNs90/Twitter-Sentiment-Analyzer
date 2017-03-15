@@ -1,6 +1,7 @@
-from src.preprocessor import Lexicon, WordEmbeddings
+from src.preprocessor import Postag, Lexicon, WordEmbeddings
 from sklearn.metrics import f1_score
 from sklearn import svm
+from sklearn.ensemble import VotingClassifier
 import os
 
 PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
@@ -22,22 +23,22 @@ class Classifiers:
         # the normalised feature vector can be used in classifiers such as SVM
 
         print("Embedding Training Data...")
-        self.feature = Lexicon(
+        self.feature = Postag(
             os.path.join(PATH, "data-clean", self.trainingPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
             os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
         )
-        self.feature.lexicon()
+        self.feature.getvecs()
 
         print("Embedding Test Data...")
-        self.test = Lexicon(
+        self.test = Postag(
             os.path.join(PATH, "data-clean", self.testPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100,
             os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt")
         )
-        self.test.lexicon()
+        self.test.getvecs()
 
     def processNN(self):
         self.feature = WordEmbeddings(
@@ -64,3 +65,9 @@ class Classifiers:
         #fit
         #predict
         #result
+
+    #def hybrid(self, predicts, weights):
+    #    eclf = EnsembleClassifier(clfs=[clf1, clf2, clf3], weights=[1, 1, 1])
+
+
+
