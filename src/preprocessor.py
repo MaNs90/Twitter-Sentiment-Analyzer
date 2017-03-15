@@ -64,7 +64,7 @@ class WordEmbeddings(Feature):
             features = np.empty([len(self.myTweets), self.dim])
         for words in self.myTweets:
             if flag:
-                temp = np.empty([100, self.dim])
+                temp = np.zeros([75, self.dim])
             else:
                 temp = np.empty([len(words), self.dim])
             count = 0

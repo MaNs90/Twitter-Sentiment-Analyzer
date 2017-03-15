@@ -21,6 +21,11 @@ class Runner:
         print("Training and Classifying...")
         self.taskB.svm()
 
+        print("Processing RNN set B...")
+        self.taskB.processNN()
+        print("Training and Classifying RNN...")
+        self.taskB.rnn()
+
 
 if __name__ == "__main__":
     pathA = "twitter-train-cleansed-A.tsv"
@@ -30,4 +35,4 @@ if __name__ == "__main__":
 
     runner = Runner(pathA, pathB, testA, testB)
 
-    runner.run(clean=True)
+    runner.run(clean=False)

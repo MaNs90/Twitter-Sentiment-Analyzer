@@ -1,7 +1,11 @@
 from src.preprocessor import Postag, Lexicon, WordEmbeddings
 from sklearn.metrics import f1_score
 from sklearn import svm
-from sklearn.ensemble import VotingClassifier
+from keras.layers import LSTM, Masking
+from keras.models import Sequential
+from keras.layers import Dense
+import numpy as np
+from keras.models import model_from_json
 import os
 
 PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
@@ -41,15 +45,21 @@ class Classifiers:
         self.test.getvecs()
 
     def processNN(self):
+        print("Embedding RNN Training Data...")
         self.feature = WordEmbeddings(
-            os.path.join(PATH, "data-clean", "self.trainingPath"),
+            os.path.join(PATH, "data-clean", self.trainingPath),
+            os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
+            100
+        )
+
+        print("Embedding RNN Test Data...")
+        self.test = WordEmbeddings(
+            os.path.join(PATH, "data-clean", self.testPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
             100
         )
         self.feature.glove(flag=True)
-
-        #self.test = Object
-        self.test.run()
+        self.test.glove(flag=True)
 
     def svm(self):
         # simply applies an SVM classifier to the feature vector
@@ -60,14 +70,39 @@ class Classifiers:
         result = support.predict(self.test.vector)
         print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
 
-    def nn(self):
-        return
-        #fit
-        #predict
-        #result
+    def rnn(self):
+        data = np.array(self.feature.vector)
+        test = np.array(self.test.vector)
+        labels = []
+        val_dict = {2:[0,0,1], 1:[0,1,0], 0:[1,0,0]}
+        for l in self.feature.labels():
+            labels.append(val_dict[l])
 
-    #def hybrid(self, predicts, weights):
-    #    eclf = EnsembleClassifier(clfs=[clf1, clf2, clf3], weights=[1, 1, 1])
+        print("CREATING RNN")
+        model = Sequential()
+        model.add(Masking(mask_value=0., input_shape=(None, 100)))
+        model.add(LSTM(100))
+        model.add(Dense(3, activation='sigmoid'))
+        model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
+        print(model.summary())
+        model.fit(data, labels, nb_epoch=5, batch_size=64)
+
+        predictions = model.predict(test, batch_size=32, verbose=0)
+        result = []
+        for j, r in enumerate(predictions):
+            max_value = 0
+            max_index = 1
+            for i, val in enumerate(r):
+                if val > max_value:
+                    max_index = i
+                    max_value = val
+            result.append(max_index)
+
+        result=np.array(result)
+
+        print("My F1 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+
+
 
 
 
