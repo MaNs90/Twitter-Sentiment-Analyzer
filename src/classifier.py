@@ -50,7 +50,7 @@ class Classifiers:
         )
         self.test.getvecs() # Testing features
 
-    def processNN(self):
+    def processNN(self, lexFlag):
         """
         Process the 2D features specific for the neural network.
         """
@@ -71,8 +71,12 @@ class Classifiers:
             os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
             os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
         )
-        self.feature.lexicon(flag=True)
-        self.test.lexicon(flag=True)
+        if lexFlag:
+            self.feature.lexicon(flag=True)
+            self.test.lexicon(flag=True)
+        else:
+            self.feature.glove(flag=True)
+            self.test.glove(flag=True)
 
     def svm(self, param):
         """
@@ -127,7 +131,7 @@ class Classifiers:
 
         print("CREATING RNN")
         model = Sequential()
-        model.add(Masking(mask_value=0., input_shape=(75, 102)))
+        model.add(Masking(mask_value=0., input_shape=data.shape[1:])
         model.add(LSTM(100))
         model.add(Dense(3, activation='sigmoid'))
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -158,6 +162,25 @@ class Classifiers:
         print(classification_report(y_true, y_pred))
         print()
         print("The (F1_pos+F1_neg)/2 score is ", f1_score(y_true, y_pred, labels=[2, 0], average="macro"))
+
+    def bayes(self):
+        """
+        Applies a Gaussian NB classifier to the training and testing data.
+        """
+        prior = {}
+        gauss = GaussianNB()
+        gauss = gauss.fit(self.feature.vector, self.feature.labels())
+        result = gauss.predict(self.test.vector)
+        self.clfresults.append(result)
+        print("Detailed classification report:")
+        print()
+        print("The model is trained on the full training set.")
+        print("The scores are computed on the full development set.")
+        print()
+        y_true, y_pred = self.test.labels(), result
+        print(classification_report(y_true, y_pred))
+        print()
+        print("The (F1_pos+F1_neg)/2 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
 
     def hybrid(self, weights):
         """

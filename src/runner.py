@@ -39,8 +39,7 @@ class Runner:
         print("Training and Classifying RNN...")
         self.taskA.rnn(num_epochs=5)
         print("Hybrid Result...")
-        self.taskA.hybrid(weights=[0.3,0.3,0.4])
-
+        self.taskA.hybrid(weights=[3,3,4])
 
         print()
         print("###################### Processing Task B... ##############################")
@@ -50,11 +49,13 @@ class Runner:
         print("Training and Classifying using Random Forest...")
         self.taskB.rforest(num_est=200)
         print("Processing RNN 2D feature set...")
+        self.taskB.bayes()
+        print("Processing RNN 2D feature set...")
         self.taskB.processNN()
         print("Training and Classifying RNN...")
         self.taskB.rnn(num_epochs=7)
         print("Hybrid Result...")
-        self.taskB.hybrid(weights=[0.3,0.3,0.4])
+        self.taskB.hybrid(weights=[3,2,2,6])
 
 
 if __name__ == "__main__":
@@ -65,4 +66,5 @@ if __name__ == "__main__":
 
     runner = Runner(pathA, pathB, testA, testB)
 
+    # CHANGE TO TRUE BEFORE SUBMISSION!
     runner.run(clean=False)
