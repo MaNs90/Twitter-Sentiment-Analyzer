@@ -66,13 +66,13 @@ class Runner:
         with open("resultsA.csv", 'w') as outfile:
             spamwriter = csv.writer(outfile, delimiter=',')
             for i,pred in enumerate(resA):
-                spamwriter.writerow([ida[i], enum[pred]])
+                spamwriter.writerow([ida[i][0], ida[i][1], enum[pred]])
 
 
         with open("resultsB.csv", 'w') as outfile:
             spamwriter = csv.writer(outfile, delimiter=',')
             for i, pred in enumerate(resB):
-                spamwriter.writerow([idb[i], enum[pred]])
+                spamwriter.writerow([idb[i][0], idb[i][1], enum[pred]])
 
 
 if __name__ == "__main__":
