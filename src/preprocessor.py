@@ -1,9 +1,9 @@
-import csv
-import numpy as np
 from src.tokenizer import Tokenizer
 from sklearn.preprocessing import normalize
-import re
+import csv
 import nltk
+import numpy as np
+import re
 
 
 class Feature:

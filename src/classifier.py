@@ -1,13 +1,12 @@
 from src.preprocessor import Postag, Lexicon, WordEmbeddings
-from sklearn.metrics import f1_score
-from sklearn import svm
-from keras.layers import LSTM, Masking
+from keras.layers import LSTM, Masking, Dense
 from keras.models import Sequential
-from keras.layers import Dense
-import numpy as np
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import f1_score, classification_report
+from sklearn.naive_bayes import GaussianNB
+from sklearn import svm
+import numpy as np
 import os
-from sklearn.metrics import classification_report
 
 PATH = os.path.abspath(os.path.join(os.path.dirname(__file__),".."))
 
@@ -131,7 +130,7 @@ class Classifiers:
 
         print("CREATING RNN")
         model = Sequential()
-        model.add(Masking(mask_value=0., input_shape=data.shape[1:])
+        model.add(Masking(mask_value=0., input_shape=data.shape[1:]))
         model.add(LSTM(100))
         model.add(Dense(3, activation='sigmoid'))
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -167,7 +166,6 @@ class Classifiers:
         """
         Applies a Gaussian NB classifier to the training and testing data.
         """
-        prior = {}
         gauss = GaussianNB()
         gauss = gauss.fit(self.feature.vector, self.feature.labels())
         result = gauss.predict(self.test.vector)
