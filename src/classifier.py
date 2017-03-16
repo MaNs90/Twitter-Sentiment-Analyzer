@@ -55,20 +55,24 @@ class Classifiers:
         Process the 2D features specific for the neural network.
         """
         print("Embedding RNN Training Data...")
-        self.feature = WordEmbeddings(
+        self.feature = Lexicon(
             os.path.join(PATH, "data-clean", self.trainingPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
-            100
+            100,
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
+            os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
         )
 
         print("Embedding RNN Test Data...")
-        self.test = WordEmbeddings(
+        self.test = Lexicon(
             os.path.join(PATH, "data-clean", self.testPath),
             os.path.join(PATH, "data", "glove", "glove.twitter.27B.100d.txt"),
-            100
+            100,
+            os.path.join(PATH, "data", "sentiment", "unigrams-pmilexicon.txt"),
+            os.path.join(PATH, "data", "sentiment", "bigrams-pmilexicon.txt")
         )
-        self.feature.glove(flag=True)
-        self.test.glove(flag=True)
+        self.feature.lexicon(flag=True)
+        self.test.lexicon(flag=True)
 
     def svm(self, param):
         """
@@ -79,7 +83,7 @@ class Classifiers:
         support = svm.SVC(kernel="linear", C=param)
         support = support.fit(self.feature.vector, self.feature.labels())
         result = support.predict(self.test.vector)
-        self.clfresults = [result]
+        self.clfresults.append(result)
         print("Detailed classification report:")
         print()
         print("The model is trained on the full training set.")
@@ -88,7 +92,7 @@ class Classifiers:
         y_true, y_pred = self.test.labels(), result
         print(classification_report(y_true, y_pred))
         print()
-        print("The (F1_pos+F1_neg)/2 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+        print("The (F1_pos+F1_neg)/2 score is ", f1_score(y_true, y_pred, labels=[2, 0], average="macro"))
 
     def rforest(self, num_est):
         """
@@ -107,7 +111,7 @@ class Classifiers:
         y_true, y_pred = self.test.labels(), result
         print(classification_report(y_true, y_pred))
         print()
-        print("The (F1_pos+F1_neg)/2 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+        print("The (F1_pos+F1_neg)/2 score is ", f1_score(y_true, y_pred, labels=[2, 0], average="macro"))
 
     def rnn(self, num_epochs):
         """
@@ -123,7 +127,7 @@ class Classifiers:
 
         print("CREATING RNN")
         model = Sequential()
-        model.add(Masking(mask_value=0., input_shape=(75, 100)))
+        model.add(Masking(mask_value=0., input_shape=(75, 102)))
         model.add(LSTM(100))
         model.add(Dense(3, activation='sigmoid'))
         model.compile(loss='binary_crossentropy', optimizer='adam', metrics=['accuracy'])
@@ -131,6 +135,7 @@ class Classifiers:
         model.fit(data, labels, nb_epoch=num_epochs, batch_size=64)
 
         predictions = model.predict(test, batch_size=32, verbose=0)
+
         result = []
         for j, r in enumerate(predictions):
             max_value = 0
@@ -152,7 +157,7 @@ class Classifiers:
         y_true, y_pred = self.test.labels(), result
         print(classification_report(y_true, y_pred))
         print()
-        print("The (F1_pos+F1_neg)/2 score is ", f1_score(self.test.labels(), result, labels=[2, 0], average="macro"))
+        print("The (F1_pos+F1_neg)/2 score is ", f1_score(y_true, y_pred, labels=[2, 0], average="macro"))
 
     def hybrid(self, weights):
         """

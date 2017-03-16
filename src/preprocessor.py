@@ -105,6 +105,8 @@ class WordEmbeddings(Feature):
                 features[index] = np.mean(temp, axis=0)
             index += 1
 
+        if not flag:
+            features = normalize(features, axis=1)
         self.vector = features
         return features
 
@@ -124,12 +126,12 @@ class Lexicon(WordEmbeddings):
         self.sentimentPath1 = sentimentPath1
         self.sentimentPath2 = sentimentPath2
         
-    def lexicon(self):
+    def lexicon(self, flag=False):
         """
         Begin adding lexicon features to the word embedding feature.
         :return: New feature with word embedding appended.
         """
-        features = self.glove()
+        features = self.glove(flag=flag)
         all_words = set(w for words in self.myTweets for w in words)
         unigramLexicon = {}
         count = 0
@@ -165,53 +167,98 @@ class Lexicon(WordEmbeddings):
         print("The function found {} in the bigram sentiment lexicon out of {} total unique words".format(count,len(bigramDict.keys())))
         
         index = 0
-        sentimentFeatures1 = np.empty([len(self.myTweets), 1])
+        if flag:
+            sentimentFeatures1 = []
+        else:
+            sentimentFeatures1 = np.empty([len(self.myTweets), 1])
         for words in self.myTweets:
-            temp = np.empty([len(words), 1])
+            if flag:
+                temp = np.zeros([75, 1])
+            else:
+                temp = np.empty([len(words), 1])
             count = 0
             for w in words:
                 if w in unigramLexicon.keys():
                     # print("I found ", w)
                     # print("Its embedding is ", glove_small[w])
-                    temp[count] = unigramLexicon[w]
+                    if flag:
+                        temp[count] = float(unigramLexicon[w])/6
+                    else:
+                        temp[count] = unigramLexicon[w]
                 else:
                     # print("I didn't find ", w)
                     temp[count] = 0
                 count += 1
 
-            sentimentFeatures1[index] = np.mean(temp, axis=0)
+            if flag:
+                sentimentFeatures1.append(temp)
+            else:
+                sentimentFeatures1[index] = np.mean(temp, axis=0)
+
             index += 1
 
-        sentimentFeatures1 = normalize(sentimentFeatures1, axis=0)
+        if not flag:
+            sentimentFeatures1 = normalize(sentimentFeatures1, axis=0)
         
         index = 0
-        sentimentFeatures2=np.empty([len(self.myTweets),1])
+        if flag:
+            sentimentFeatures2 = []
+        else:
+            sentimentFeatures2 = np.empty([len(self.myTweets), 1])
         for words in self.myTweets:
             if len(words)==0:
                 continue
-            temp = np.empty([len(words),1])
+            if flag:
+                temp = np.zeros([75, 1])
+            else:
+                temp = np.empty([len(words), 1])
             count = 0
             for w in range(1,len(words)):
                 if (words[w-1],words[w]) in bigramLexicon:
-                    temp[count] = bigramLexicon[(words[w-1],words[w])]
+                    if flag:
+                        temp[count] = float(bigramLexicon[(words[w - 1], words[w])])/6
+                    else:
+                        temp[count] = bigramLexicon[(words[w-1],words[w])]
                 else:
                     #print("I didn't find ", w)
                     temp[count] = 0
                 count = count + 1  
-                      
-            sentimentFeatures2[index] = np.mean(temp, axis=0)        
-            index = index + 1
-        sentimentFeatures2 = normalize(sentimentFeatures2,axis=0)  
-        
-        new_features = []
-        for i, f in enumerate(features):
-            new_features.append(np.append(f, sentimentFeatures1[i]))
 
-        features = np.array(new_features)
-        
-        new_features=[]
-        for i, f in enumerate(features):
-            new_features.append(np.append(f,sentimentFeatures2[i]))
+            if flag:
+                sentimentFeatures2.append(temp)
+            else:
+                sentimentFeatures2[index] = np.mean(temp, axis=0)
+            index = index + 1
+
+        if not flag:
+            sentimentFeatures2 = normalize(sentimentFeatures2,axis=0)
+            new_features = []
+            for i, f in enumerate(features):
+                new_features.append(np.append(f, sentimentFeatures1[i]))
+
+            features = np.array(new_features)
+
+            new_features = []
+            for i, f in enumerate(features):
+                new_features.append(np.append(f, sentimentFeatures2[i]))
+        else:
+            new_features = []
+            for i, f in enumerate(features):
+                n_f = []
+                for j, fe in enumerate(f):
+                    n_f.append(np.append(fe, sentimentFeatures1[i][j]))
+                new_features.append(n_f)
+
+            features = np.array(new_features)
+
+            new_features = []
+            for i, f in enumerate(features):
+                n_f = []
+                for j, fe in enumerate(f):
+                    n_f.append(np.append(fe, sentimentFeatures2[i][j]))
+                new_features.append(n_f)
+
+
            
         features = np.array(new_features)
         self.vector = features
@@ -271,7 +318,7 @@ class Postag(Lexicon):
             self.regex_or(normalEyes, wink) + "(?:<|&lt;)?",
             basicface,
             oOEmote
-        ) + "$"
+        ) + "|(<smile>|<lolface>|<sadface>|<neutralface>)$"
 
         return mycompile(emoticon)
 
@@ -284,7 +331,7 @@ class Postag(Lexicon):
         mycompile = lambda pat: re.compile(pat, re.UNICODE)
 
         # Hearts regex 37 'H'
-        Hearts = mycompile("^(?:<+/?3+)+$")
+        Hearts = mycompile("^((?:<+/?3+)+)|(<heart>)$")
 
         # URL regex 38 'U'
         url = mycompile("^<url>$")
@@ -295,7 +342,7 @@ class Postag(Lexicon):
                                            "(?<=(?:^))") + r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}(?=" + Bound + ")")
 
         # Emoticon regex 40 'E'
-        Emoji_re_test = self.get_emoticon_regex()
+        Emoji_re = self.get_emoticon_regex()
 
         # Arrows regex 41 'A'
         Arrows = mycompile(
@@ -316,7 +363,7 @@ class Postag(Lexicon):
         decorations = mycompile(u"(?:[Ã¢â„¢Â«Ã¢â„¢Âª]+|[Ã¢Ëœâ€¦Ã¢Ëœâ€ ]+|[Ã¢â„¢Â¥Ã¢ï¿½Â¤Ã¢â„¢Â¡]+|[\u2639-\u263b]+|[\ue001-\uebbb]+)")
 
         # HashTag regex 45 'HT'
-        Hashtag = mycompile("^#[a-zA-Z0-9_]+$")
+        Hashtag = mycompile("^<hashtag>$")
 
         # AtMention regex (user mentions) 46 'AM'
         AtMention = mycompile("^<user>$")
@@ -324,7 +371,7 @@ class Postag(Lexicon):
         regex_codes = [[Hearts, 'H'],
                        [url, 'U'],
                        [Email, 'EMA'],
-                       [Emoji_re_test, 'E'],
+                       [Emoji_re, 'E'],
                        [Arrows, 'A'],
                        [entity, 'EN'],
                        [arbitraryAbbrev, 'AA'],
@@ -403,6 +450,7 @@ class Postag(Lexicon):
 
             all_vecs.append(tweet_vec)
 
+        all_vecs = normalize(all_vecs,axis=1)
         return all_vecs
 
     def getvecs(self):
