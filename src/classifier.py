@@ -211,6 +211,8 @@ class Classifiers:
         print()
         print("The (F1_pos+F1_neg)/2 score is ", f1_score(self.test.labels(), output, labels=[2, 0], average="macro"))
 
+        return y_pred
+
 
 
 

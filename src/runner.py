@@ -1,5 +1,6 @@
 import src.cleaner as cleaner
 import src.classifier as classifier
+import csv
 
 
 class Runner:
@@ -27,6 +28,8 @@ class Runner:
             print("Cleaning...")
             self.cleaner.clean()
             self.cleanerTest.clean()
+            ida = self.cleanerTest.tweetIDA
+            idb = self.cleanerTest.tweetIDB
         print()
         print("###################### Processing Task A... ##############################")
         self.taskA.processLexicon()
@@ -39,7 +42,8 @@ class Runner:
         print("Training and Classifying RNN...")
         self.taskA.rnn(num_epochs=5)
         print("Hybrid Result...")
-        self.taskA.hybrid(weights=[4,3,3])
+        resA = self.taskA.hybrid(weights=[4,3,3])
+
 
         print()
         print("###################### Processing Task B... ##############################")
@@ -51,20 +55,33 @@ class Runner:
         print("Processing RNN 2D feature set...")
         self.taskB.bayes()
         print("Processing RNN 2D feature set...")
-        self.taskB.processNN(False)
+        self.taskB.processNN(True)
         print("Training and Classifying RNN...")
         self.taskB.rnn(num_epochs=7)
         print("Hybrid Result...")
-        self.taskB.hybrid(weights=[3,2,2,6])
+        resB = self.taskB.hybrid(weights=[3,2,2,6])
+
+        enum = {2:'positive', 1:'neutral', 0:'negative', 3:'unknown'}
+
+        with open("resultsA.csv", 'w') as outfile:
+            spamwriter = csv.writer(outfile, delimiter=',')
+            for i,pred in enumerate(resA):
+                spamwriter.writerow([ida[i], enum[pred]])
+
+
+        with open("resultsB.csv", 'w') as outfile:
+            spamwriter = csv.writer(outfile, delimiter=',')
+            for i, pred in enumerate(resB):
+                spamwriter.writerow([idb[i], enum[pred]])
 
 
 if __name__ == "__main__":
     pathA = "twitter-train-cleansed-A.tsv"
     pathB = "twitter-train-cleansed-B.tsv"
-    testA = "twitter-dev-gold-A.tsv"
-    testB = "twitter-dev-gold-B.tsv"
+    testA = "twitter-test-A.tsv"
+    testB = "twitter-test-B.tsv"
 
     runner = Runner(pathA, pathB, testA, testB)
 
     # CHANGE TO TRUE BEFORE SUBMISSION!
-    runner.run(clean=False)
+    runner.run(clean=True)

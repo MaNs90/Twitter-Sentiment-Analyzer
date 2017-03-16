@@ -48,6 +48,9 @@ class Cleaner:
 
         self.multipleDotsRegex = re.compile(r"[.]{2,}")
 
+        self.tweetIDA = []
+        self.tweetIDB = []
+
     def _hashtagConverter(self, hashtag):
         """
         Convert hashtags to <hashtag>
@@ -106,6 +109,7 @@ class Cleaner:
         with open(self.cleanedPathA, "w", newline="\n") as clean:
             output = csv.writer(clean, delimiter="\t")
             for index, row in dataFrameA.iterrows():
+                self.tweetIDA.append([row[0],row[1]])
                 sentiment, tweetWordList = row[4], row[5].split()
                 phrase = tweetWordList[int(row[2]):int(row[3]) + 1]
                 cleanPhrase = self._deepClean(phrase)
@@ -117,8 +121,7 @@ class Cleaner:
         with open(self.cleanedPathB, "w", newline="\n") as clean:
             output = csv.writer(clean, delimiter="\t")
             for index, row in dataFrameB.iterrows():
-                # 263034334720716800
-                # 261794390148804608
+                self.tweetIDB.append([row[0],row[1]])
                 sentiment, tweetWordList = row[2], row[3].split()
                 cleanTweetWordList = self._deepClean(tweetWordList)
                 output.writerow([sentiment, " ".join(cleanTweetWordList)])

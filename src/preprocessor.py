@@ -38,11 +38,16 @@ class Feature:
         tk = Tokenizer(preserve_case=False)
         with open(self.trainingPath) as training:
             tsvRead = csv.reader(training, delimiter="\t")
-            enum = {'positive': 2, 'neutral': 1, 'negative': 0}
+            enum = {'positive': 2, 'neutral': 1, 'negative': 0, 'unknown':3}
             tweet_dict = {}
             for line in tsvRead:
                 if tk.tokenize(line[1]):
-                    self.data.append({'Sentiment' : enum[line[0]], 'Tweet' : tk.tokenize(line[1])})
+                    phrase = tk.tokenize(line[1])
+                    for i,word in enumerate(phrase):
+                        if i>50 and word in ["neutral","positive","negative","unknown"]:
+                            phrase = phrase[:i]
+                            break
+                    self.data.append({'Sentiment' : enum[line[0]], 'Tweet' : phrase})
 
 
 class WordEmbeddings(Feature):
